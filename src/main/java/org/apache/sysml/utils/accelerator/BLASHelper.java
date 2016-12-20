@@ -20,14 +20,19 @@ package org.apache.sysml.utils.accelerator;
 
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class BLASHelper {
 	private static boolean isSystemMLLoaded = false;
+	private static final Log LOG = LogFactory.getLog(BLASHelper.class.getName());
 	static {
 		String blasType = getBLASType();
 		if(blasType != null) {
 			try {
 				LibraryLoader.loadLibrary("systemml", "_" + blasType);
 				isSystemMLLoaded = true;
+				LOG.info("Successfully loaded systemml library with " + blasType);
 			} catch (IOException e) { }
 		}
 	}
@@ -40,42 +45,19 @@ public class BLASHelper {
 		String specifiedBLAS = System.getenv("SYSTEMML_BLAS");
 		if(specifiedBLAS != null) {
 			if(specifiedBLAS.trim().toLowerCase().equals("mkl")) {
-				try {
-					 System.loadLibrary("mkl_rt");
-					 return "mkl";
-				}
-				catch (UnsatisfiedLinkError e) {
-					// If you cannot load mkl, don't try loading openblas as SYSTEMML_BLAS is specified
-					return null;
-				}
+				return LibraryLoader.isMKLAvailable() ? "mkl" : null;
 			}
 			else if(specifiedBLAS.trim().toLowerCase().equals("openblas")) {
-				try {
-					 System.loadLibrary("openblas");
-					 return "openblas";
-				}
-				catch (UnsatisfiedLinkError e) {
-					// If you cannot load openblas, don't try loading mkl as SYSTEMML_BLAS is specified
-					return null;
-				}
+				return LibraryLoader.isOpenBLASAvailable() ? "openblas" : null;
 			}
 			else {
+				LOG.info("Unknown BLAS:" + specifiedBLAS);
 				return null;
 			}
 		}
 		else {
 			// No BLAS specified ... try loading Intel MKL first
-			try {
-				 System.loadLibrary("mkl_rt");
-				 return "mkl";
-			}
-			catch (UnsatisfiedLinkError e) { }
-			try {
-				 System.loadLibrary("openblas");
-				 return "openblas";
-			}
-			catch (UnsatisfiedLinkError e) { }
-			return null;
+			return LibraryLoader.isMKLAvailable() ? "mkl" : (LibraryLoader.isOpenBLASAvailable() ? "openblas" : null);
 		}
 	}
 	

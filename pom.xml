@@ -5,13 +5,20 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>systemml-accelerator</name>
   <description>Useful utility to manage Apache SystemML's accelerator libraries</description>
+  	<properties>
+		<spark.version>1.6.0</spark.version>
+		<scala.binary.version>2.10</scala.binary.version>
+	</properties>
   <dependencies>
   	<!-- 
+  	// For local testing
   	cd lib
-  	mvn deploy:deploy-file -Dfile=jcuda-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcuda -Dversion=0.8.0 -Dpackaging=jar
-  	mvn deploy:deploy-file -Dfile=jcublas-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcublas -Dversion=0.8.0 -Dpackaging=jar
-  	mvn deploy:deploy-file -Dfile=jcusparse-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcusparse -Dversion=0.8.0 -Dpackaging=jar
-  	mvn deploy:deploy-file -Dfile=jcudnn-0.8.0RC.jar -DgroupId=org.jcuda -DartifactId=jcudnn -Dversion=0.8.0RC -Dpackaging=jar
+  	mvn install:install-file -Dfile=jcuda-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcuda -Dversion=0.8.0 -Dpackaging=jar
+  	mvn install:install-file -Dfile=jcublas-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcublas -Dversion=0.8.0 -Dpackaging=jar
+  	mvn install:install-file -Dfile=jcusparse-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcusparse -Dversion=0.8.0 -Dpackaging=jar
+  	mvn install:install-file -Dfile=jcudnn-0.8.0RC.jar -DgroupId=org.jcuda -DartifactId=jcudnn -Dversion=0.8.0RC -Dpackaging=jar
+  	cd ..\target
+  	mvn install:install-file -Dfile=systemml-accelerator-0.0.1-SNAPSHOT-jar-with-dependencies.jar -DgroupId=org.systemml -DartifactId=systemml-accelerator -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
   	 -->
     <dependency>
       <groupId>org.jcuda</groupId>
@@ -37,6 +44,12 @@
 		<groupId>commons-logging</groupId>
 		<artifactId>commons-logging</artifactId>
 		<version>1.1.1</version>
+		<scope>provided</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.spark</groupId>
+		<artifactId>spark-core_${scala.binary.version}</artifactId>
+		<version>${spark.version}</version>
 		<scope>provided</scope>
 	</dependency>
   </dependencies>

@@ -48,29 +48,33 @@ public class JCudaHelper {
 	private static int deviceCount = 0;
 	static {
 		try {
-			long start = System.nanoTime();
-			LibraryLoader.loadLibrary("JCublas-" + jcudaVersion, "");
-			LibraryLoader.loadLibrary("JCublas2-" + jcudaVersion, "");
-			LibraryLoader.loadLibrary("JCudaDriver-" + jcudaVersion, "");
-			LibraryLoader.loadLibrary("JCudaRuntime-" + jcudaVersion, "");
-			LibraryLoader.loadLibrary("JCusparse-" + jcudaVersion, "");
-			LibraryLoader.loadLibrary("JNvrtc-" + jcudaVersion, "");
-			LibraryLoader.loadLibrary("JCudnn-" + jcudaVersion, "");
-			
-			JCuda.setExceptionsEnabled(true);
-			JCudnn.setExceptionsEnabled(true);
-			JCublas2.setExceptionsEnabled(true);
-			JCusparse.setExceptionsEnabled(true);
-			JCudaDriver.setExceptionsEnabled(true);
-			cuInit(0); // Initialize the driver
-			// Obtain the number of devices
-	        int deviceCountArray[] = { 0 };
-	        cuDeviceGetCount(deviceCountArray);
-	        deviceCount = deviceCountArray[0];
-	        LOG.info("Total number of GPUs on the machine: " + deviceCount);
-	        jcudaInitTime = System.nanoTime() - start;
-	        if(testGPU()) 
-	        	isJCudaLoaded = true;
+			if(LibraryLoader.isCUDAAvailable()) {
+				long start = System.nanoTime();
+				LibraryLoader.loadLibrary("JCublas-" + jcudaVersion, "");
+				LibraryLoader.loadLibrary("JCublas2-" + jcudaVersion, "");
+				LibraryLoader.loadLibrary("JCudaDriver-" + jcudaVersion, "");
+				LibraryLoader.loadLibrary("JCudaRuntime-" + jcudaVersion, "");
+				LibraryLoader.loadLibrary("JCusparse-" + jcudaVersion, "");
+				LibraryLoader.loadLibrary("JNvrtc-" + jcudaVersion, "");
+				LibraryLoader.loadLibrary("JCudnn-" + jcudaVersion, "");
+				
+				JCuda.setExceptionsEnabled(true);
+				JCudnn.setExceptionsEnabled(true);
+				JCublas2.setExceptionsEnabled(true);
+				JCusparse.setExceptionsEnabled(true);
+				JCudaDriver.setExceptionsEnabled(true);
+				cuInit(0); // Initialize the driver
+				// Obtain the number of devices
+		        int deviceCountArray[] = { 0 };
+		        cuDeviceGetCount(deviceCountArray);
+		        deviceCount = deviceCountArray[0];
+		        LOG.info("Total number of GPUs on the machine: " + deviceCount);
+		        jcudaInitTime = System.nanoTime() - start;
+		        if(testGPU()) {
+		        	isJCudaLoaded = true;
+		        	LOG.info("Successfully loaded jcuda libraries");
+		        }
+			}
 		} catch (IOException e) { }
 	}
 	

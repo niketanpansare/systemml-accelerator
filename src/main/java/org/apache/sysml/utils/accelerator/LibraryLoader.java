@@ -19,13 +19,45 @@
 package org.apache.sysml.utils.accelerator;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
 public class LibraryLoader {
+	
+	public static boolean isMKLAvailable() {
+		try {
+			 System.loadLibrary("mkl_rt");
+			 return true;
+		}
+		catch (UnsatisfiedLinkError e) {
+			return false;
+		}
+	}
+	
+	public static boolean isOpenBLASAvailable() {
+		try {
+			 System.loadLibrary("openblas");
+			 return true;
+		}
+		catch (UnsatisfiedLinkError e) {
+			return false;
+		}
+	}
+	
+	public static boolean isCUDAAvailable() {
+		try {
+			 System.loadLibrary("cuda");
+			 return true;
+		}
+		catch (UnsatisfiedLinkError e) {
+			return false;
+		}
+	}
+	
 	public static void loadLibrary(String libName, String suffix1) throws IOException {
 		String OS = System.getProperty("os.name", "generic").toLowerCase();
 		boolean is64bit = System.getProperty("sun.arch.data.model").contains("64");
@@ -51,43 +83,18 @@ public class LibraryLoader {
 		else
 			suffix3 = "_32";
 		
-		loadLibraryHelper("/src/main/resources/" + prefix + libName + suffix1 + suffix2 + suffix3 + "." + suffix4);
+		String resourceFolder = ""; // "/src/main/resources/";
+		loadLibraryHelper(resourceFolder + prefix + libName + suffix1 + suffix2 + suffix3 + "." + suffix4);
 	}
 
 	public static void loadLibraryHelper(String path) throws IOException {
-		String[] parts = path.split("/");
-		String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
-		String prefix = "";
-		String suffix = null;
-		if (filename != null) {
-			parts = filename.split("\\.", 2);
-			prefix = parts[0];
-			suffix = (parts.length > 1) ? "." + parts[parts.length - 1] : null;
-		}
-		if (filename == null || prefix.length() < 3) {
-			throw new IllegalArgumentException("Incorrect filename:" + filename);
-		}
-		File temp = File.createTempFile(prefix, suffix);
+		File temp = File.createTempFile(path, "");
 		temp.deleteOnExit();
-		if (!temp.exists()) {
-			throw new FileNotFoundException("File doesnot exists:"
-					+ temp.getAbsolutePath());
-		}
-		byte[] buffer = new byte[1024];
-		int readBytes;
-		InputStream is = BLASHelper.class.getResourceAsStream(path);
-		if (is == null) {
-			throw new FileNotFoundException("Incorrect path:" + path);
-		}
-		OutputStream os = new FileOutputStream(temp);
-		try {
-			while ((readBytes = is.read(buffer)) != -1) {
-				os.write(buffer, 0, readBytes);
-			}
-		} finally {
-			os.close();
-			is.close();
-		}
+		InputStream in = LibraryLoader.class.getResourceAsStream("/"+path);
+		OutputStream out = FileUtils.openOutputStream(temp);
+        IOUtils.copy(in, out);
+        in.close();
+        out.close();
 		System.load(temp.getAbsolutePath());
 	}
 }
