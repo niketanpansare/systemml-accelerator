@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.systemml</groupId>
+  <artifactId>systemml-accelerator</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>systemml-accelerator</name>
+  <description>Useful utility to manage Apache SystemML's accelerator libraries</description>
+  <dependencies>
+  	<!-- 
+  	cd lib
+  	mvn deploy:deploy-file -Dfile=jcuda-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcuda -Dversion=0.8.0 -Dpackaging=jar
+  	mvn deploy:deploy-file -Dfile=jcublas-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcublas -Dversion=0.8.0 -Dpackaging=jar
+  	mvn deploy:deploy-file -Dfile=jcusparse-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcusparse -Dversion=0.8.0 -Dpackaging=jar
+  	mvn deploy:deploy-file -Dfile=jcudnn-0.8.0RC.jar -DgroupId=org.jcuda -DartifactId=jcudnn -Dversion=0.8.0RC -Dpackaging=jar
+  	 -->
+    <dependency>
+      <groupId>org.jcuda</groupId>
+      <artifactId>jcuda</artifactId>
+      <version>0.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jcuda</groupId>
+      <artifactId>jcublas</artifactId>
+      <version>0.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jcuda</groupId>
+      <artifactId>jcusparse</artifactId>
+      <version>0.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jcuda</groupId>
+      <artifactId>jcudnn</artifactId>
+      <version>0.8.0RC</version>
+    </dependency>
+    <dependency>
+		<groupId>commons-logging</groupId>
+		<artifactId>commons-logging</artifactId>
+		<version>1.1.1</version>
+		<scope>provided</scope>
+	</dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
