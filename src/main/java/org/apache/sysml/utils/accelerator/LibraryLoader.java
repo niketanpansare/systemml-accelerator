@@ -58,13 +58,34 @@ public class LibraryLoader {
 	}
 	
 	public static boolean isOpenBLASAvailable() {
-		try {
-			 System.loadLibrary("openblas");
-			 return true;
-		}
-		catch (UnsatisfiedLinkError e) {
-			LOG.debug("Unable to load OpenBLAS");
+		if(SystemUtils.IS_OS_WINDOWS) {
+			String message = "";
+			try {
+				 System.loadLibrary("openblas");
+				 return true;
+			}
+			catch (UnsatisfiedLinkError e) {
+				message += e.getMessage() + " ";
+			}
+			try {
+				 System.loadLibrary("libopenblas");
+				 return true;
+			}
+			catch (UnsatisfiedLinkError e) {
+				message += e.getMessage() + " ";
+			}
+			LOG.info("Unable to load OpenBLAS:" + message);
 			return false;
+		}
+		else {
+			try {
+				 System.loadLibrary("openblas");
+				 return true;
+			}
+			catch (UnsatisfiedLinkError e) {
+				LOG.info("Unable to load OpenBLAS:" + e.getMessage());
+				return false;
+			}
 		}
 	}
 	
@@ -74,7 +95,7 @@ public class LibraryLoader {
 			 return true;
 		}
 		catch (UnsatisfiedLinkError e) {
-			LOG.debug("Unable to load CUDA");
+			LOG.debug("Unable to load CUDA:" + e.getMessage());
 			return false;
 		}
 	}

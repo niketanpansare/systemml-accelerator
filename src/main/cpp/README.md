@@ -107,6 +107,6 @@ Download and extract [64-bit OpenBLAS](https://sourceforge.net/projects/openblas
 	```bash
 	"C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\vcvarsall.bat" amd64
 	set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_25
-	cl systemml.cpp -I. -I"%OPENBLASROOT%"\include -I"%JAVA_HOME%"\include -I"%JAVA_HOME%"\include\win32 -DUSE_OPEN_BLAS -Fesystemml_openblas_x86_64.dll -MD -LD "%OPENBLASROOT%"\lib\libopenblas.a 
+	cl systemml.cpp -I. -I"%OPENBLASROOT%"\include -I"%JAVA_HOME%"\include -I"%JAVA_HOME%"\include\win32 -DUSE_OPEN_BLAS -Fesystemml_openblas_x86_64.dll -MD -LD "%OPENBLASROOT%"\lib\libopenblas.dll.a 
 	```
 	

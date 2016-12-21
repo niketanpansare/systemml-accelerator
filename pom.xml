@@ -12,12 +12,6 @@
   <dependencies>
   	<!-- 
   	// For local testing
-  	cd lib
-  	mvn install:install-file -Dfile=jcuda-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcuda -Dversion=0.8.0 -Dpackaging=jar
-  	mvn install:install-file -Dfile=jcublas-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcublas -Dversion=0.8.0 -Dpackaging=jar
-  	mvn install:install-file -Dfile=jcusparse-0.8.0.jar -DgroupId=org.jcuda -DartifactId=jcusparse -Dversion=0.8.0 -Dpackaging=jar
-  	mvn install:install-file -Dfile=jcudnn-0.8.0RC.jar -DgroupId=org.jcuda -DartifactId=jcudnn -Dversion=0.8.0RC -Dpackaging=jar
-  	cd ..\target
   	mvn install:install-file -Dfile=accelerator-0.0.1-SNAPSHOT-jar-with-dependencies.jar -DgroupId=org.systemml -DartifactId=accelerator -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
   	 -->
     <dependency>
