@@ -36,14 +36,14 @@ public class LibraryLoader {
 	
 	private static HashMap<String, String> archMap = new HashMap<String, String>();;
 	static {
-        archMap.put("x86", "_x86_32");
-        archMap.put("i386", "_x86_32");
-        archMap.put("i486", "_x86_32");
-        archMap.put("i586", "_x86_32");
-        archMap.put("i686", "_x86_32");
-        archMap.put("x86_64", "_x86_64");
-        archMap.put("amd64", "_x86_64");
-        archMap.put("powerpc", "_ppc_64");
+        archMap.put("x86", "x86_32");
+        archMap.put("i386", "x86_32");
+        archMap.put("i486", "x86_32");
+        archMap.put("i586", "x86_32");
+        archMap.put("i686", "x86_32");
+        archMap.put("x86_64", "x86_64");
+        archMap.put("amd64", "x86_64");
+        archMap.put("powerpc", "ppc_64");
 	}
 	
 	public static boolean isMKLAvailable() {
@@ -91,11 +91,11 @@ public class LibraryLoader {
 	
 	public static boolean isCUDAAvailable() {
 		try {
-			 System.loadLibrary("cuda");
+			 System.loadLibrary("cublas64_75");
 			 return true;
 		}
 		catch (UnsatisfiedLinkError e) {
-			LOG.debug("Unable to load CUDA:" + e.getMessage());
+			LOG.info("Unable to load CUDA:" + e.getMessage());
 			return false;
 		}
 	}
@@ -103,16 +103,19 @@ public class LibraryLoader {
 	public static void loadLibrary(String libName, String suffix1) throws IOException {
 		String prefix = "";
 		String suffix2 = "";
-		
+		String os = "";
 		if (SystemUtils.IS_OS_MAC_OSX) {
 			prefix = "lib";
 			suffix2 = "dylib";
+			os = "apple";
 		} else if (SystemUtils.IS_OS_LINUX) {
 			prefix = "lib";
 			suffix2 = "so";
+			os = "linux";
 		} else if (SystemUtils.IS_OS_WINDOWS) {
 			prefix = "";
 			suffix2 = "dll";
+			os = "windows";
 		} else {
 			LOG.info("Unsupported OS:" + SystemUtils.OS_NAME);
 			throw new IOException("Unsupported OS");
@@ -123,7 +126,7 @@ public class LibraryLoader {
 			LOG.info("Unsupported architecture:" + SystemUtils.OS_ARCH);
 			throw new IOException("Unsupported architecture:" + SystemUtils.OS_ARCH);
 		}
-		loadLibraryHelper(prefix + libName + suffix1 + arch + "." + suffix2);
+		loadLibraryHelper(prefix + libName + suffix1 + "-" + os + "-" + arch + "." + suffix2);
 	}
 
 	public static void loadLibraryHelper(String path) throws IOException {
