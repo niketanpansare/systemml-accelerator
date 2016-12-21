@@ -17,14 +17,18 @@
  * under the License.
  */
 
+#include "config.h"
+
 // *****************************************************************
 // We support Intel MKL (recommended) or OpenBLAS.
 #ifndef USE_OPEN_BLAS
-	#define USE_INTEL_MKL
+#define USE_INTEL_MKL
+#else
+#undef USE_INTEL_MKL
 #endif
 // *****************************************************************
-
 #include "systemml.h"
+
 #include <vector>
 #include <cstdlib>
 #include <iostream>
@@ -199,7 +203,7 @@ void col2im(double* inputArray, double* outputArray, int N, int C, int H, int W,
 				}
 			}
 		}
-	} 
+	}
 }
 
 void im2col(double* inputArray, double* outputArray, int N, int C, int H, int W,
@@ -281,22 +285,22 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
   setSequentialBLAS();
 #pragma omp parallel for
   for (int n = 0; n < (int)N; n++) {
-    // Step 1: Rotate dout 
+    // Step 1: Rotate dout
     double* rotatedDoutPtr = new double[numRotatedElem];
     rotate180(doutPtr + n * KPQ, rotatedDoutPtr, 1, (int)C, (int)H, (int)W, (int)K,
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
-           (int)P, (int)Q); 
-    
+           (int)P, (int)Q);
+
     // Step 2: t(rotatedDout (PQ X K) %*% filter (K X CRS))
     double* col2imInput = new double[numCol2ImElem];
     matmult(rotatedDoutPtr, filterPtr, col2imInput,
             (int)P * (int)Q, (int)K, (int)C * (int)R * (int)S, 1);
-    
+
     // Step 3: Perform col2im
     col2im(col2imInput, retPtr + n * CHW, 1, (int)C, (int)H, (int)W, (int)K,
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
            (int)P, (int)Q);
-           
+
     delete[] rotatedDoutPtr;
     delete[] col2imInput;
   }
@@ -305,7 +309,7 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
   RELEASE_DOUBLE_ARRAY(env, dout, doutPtr);
   RELEASE_DOUBLE_ARRAY(env, ret, retPtr);
 }
-  
+
 JNIEXPORT void JNICALL
 Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
     JNIEnv* env, jclass, jdoubleArray input, jdoubleArray filter,
@@ -322,16 +326,16 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
 #pragma omp parallel for
   for (int n = 0; n < (int)N; n++) {
     double* loweredMat = new double[numIm2ColElem];
-    
+
     // Step 1: Perform im2col
     im2col(inputPtr + n * CHW, loweredMat, 1, (int)C, (int)H, (int)W, (int)K,
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
            (int)P, (int)Q);
-    
+
     // Step 2: filter (K X CRS) %*% loweredMat (CRS X PQ)
     matmult(filterPtr, loweredMat, retPtr + n * KPQ, (int)K,
             (int)C * (int)R * (int)S, (int)P * (int)Q, 1);
-    
+
     delete[] loweredMat;
   }
 
