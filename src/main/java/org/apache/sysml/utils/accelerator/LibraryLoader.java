@@ -25,8 +25,26 @@ import java.io.OutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang.SystemUtils;
+import java.util.HashMap;
 
 public class LibraryLoader {
+	
+	private static final Log LOG = LogFactory.getLog(LibraryLoader.class.getName());
+	
+	private static HashMap<String, String> archMap = new HashMap<String, String>();;
+	static {
+        archMap.put("x86", "_x86_32");
+        archMap.put("i386", "_x86_32");
+        archMap.put("i486", "_x86_32");
+        archMap.put("i586", "_x86_32");
+        archMap.put("i686", "_x86_32");
+        archMap.put("x86_64", "_x86_64");
+        archMap.put("amd64", "_x86_64");
+        archMap.put("powerpc", "_ppc_64");
+	}
 	
 	public static boolean isMKLAvailable() {
 		try {
@@ -34,6 +52,7 @@ public class LibraryLoader {
 			 return true;
 		}
 		catch (UnsatisfiedLinkError e) {
+			LOG.info("Unable to load MKL:" + e.getMessage());
 			return false;
 		}
 	}
@@ -44,6 +63,7 @@ public class LibraryLoader {
 			 return true;
 		}
 		catch (UnsatisfiedLinkError e) {
+			LOG.debug("Unable to load OpenBLAS");
 			return false;
 		}
 	}
@@ -54,47 +74,62 @@ public class LibraryLoader {
 			 return true;
 		}
 		catch (UnsatisfiedLinkError e) {
+			LOG.debug("Unable to load CUDA");
 			return false;
 		}
 	}
 	
 	public static void loadLibrary(String libName, String suffix1) throws IOException {
-		String OS = System.getProperty("os.name", "generic").toLowerCase();
-		boolean is64bit = System.getProperty("sun.arch.data.model").contains("64");
 		String prefix = "";
-		String suffix2 = "_x86";
-		String suffix3 = "";
-		String suffix4 = "";
+		String suffix2 = "";
 		
-		if ((OS.indexOf("mac") >= 0) || (OS.indexOf("darwin") >= 0)) {
+		if (SystemUtils.IS_OS_MAC_OSX) {
 			prefix = "lib";
-			suffix4 = "dylib";
-		} else if (OS.indexOf("nux") >= 0) {
+			suffix2 = "dylib";
+		} else if (SystemUtils.IS_OS_LINUX) {
 			prefix = "lib";
-			suffix4 = "so";
-		} else if (OS.indexOf("win") >= 0) {
+			suffix2 = "so";
+		} else if (SystemUtils.IS_OS_WINDOWS) {
 			prefix = "";
-			suffix4 = "dll";
+			suffix2 = "dll";
 		} else {
+			LOG.info("Unsupported OS:" + SystemUtils.OS_NAME);
 			throw new IOException("Unsupported OS");
 		}
-		if(is64bit)
-			suffix3 = "_64";
-		else
-			suffix3 = "_32";
 		
-		String resourceFolder = ""; // "/src/main/resources/";
-		loadLibraryHelper(resourceFolder + prefix + libName + suffix1 + suffix2 + suffix3 + "." + suffix4);
+		String arch = archMap.get(SystemUtils.OS_ARCH);
+		if(arch == null) {
+			LOG.info("Unsupported architecture:" + SystemUtils.OS_ARCH);
+			throw new IOException("Unsupported architecture:" + SystemUtils.OS_ARCH);
+		}
+		loadLibraryHelper(prefix + libName + suffix1 + arch + "." + suffix2);
 	}
 
 	public static void loadLibraryHelper(String path) throws IOException {
-		File temp = File.createTempFile(path, "");
-		temp.deleteOnExit();
-		InputStream in = LibraryLoader.class.getResourceAsStream("/"+path);
-		OutputStream out = FileUtils.openOutputStream(temp);
-        IOUtils.copy(in, out);
-        in.close();
-        out.close();
-		System.load(temp.getAbsolutePath());
+		InputStream in = null; OutputStream out = null;
+		try {
+			in = LibraryLoader.class.getResourceAsStream("/"+path);
+			if(in != null) {
+				File temp = File.createTempFile(path, "");
+				temp.deleteOnExit();
+				out = FileUtils.openOutputStream(temp);
+		        IOUtils.copy(in, out);
+		        in.close(); in = null;
+		        out.close(); out = null;
+				System.load(temp.getAbsolutePath());
+			}
+			else
+				throw new IOException("No lib available in the jar:" + path);
+			
+		} catch(IOException e) {
+			LOG.info("Unable to load library " + path + " from resource:" + e.getMessage());
+			throw e;
+		} finally {
+			if(out != null)
+				out.close();
+			if(in != null)
+				in.close();
+		}
+		
 	}
 }

@@ -29,6 +29,7 @@ public class BLASHelper {
 	static {
 		String blasType = getBLASType();
 		if(blasType != null) {
+			LOG.info("Found BLAS: " + blasType);
 			try {
 				LibraryLoader.loadLibrary("systemml", "_" + blasType);
 				isSystemMLLoaded = true;

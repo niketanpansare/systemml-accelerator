@@ -29,10 +29,10 @@ extern "C" {
 /*
  * Class:     org_apache_sysml_runtime_controlprogram_CPPUtil
  * Method:    matrixMultDenseDense
- * Signature: ([D[D[DIII)V
+ * Signature: ([D[D[DIIII)V
  */
 JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_matrixMultDenseDense
-  (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint);
+  (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint, jint);
 
 /*
  * Class:     org_apache_sysml_runtime_controlprogram_CPPUtil
@@ -40,6 +40,14 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_matr
  * Signature: ([D[D[DIIIIIIIIIIIII)V
  */
 JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense
+  (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint);
+
+/*
+ * Class:     org_apache_sysml_runtime_controlprogram_CPPUtil
+ * Method:    conv2dBackwardDataDense
+ * Signature: ([D[D[DIIIIIIIIIIIII)V
+ */
+JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dBackwardDataDense
   (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint);
 
 #ifdef __cplusplus
