@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 2.8)
+
+project (systemml-accelerator)
+
+# All custom find modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
+# OpenMP is required
+find_package(OpenMP REQUIRED)
+
+# Options to Use OpenBLAS or Intel MKL
+option(USE_OPEN_BLAS "Whether to use OpenBLAS (Defaults to compiling with Intel MKL, if both set, MKL has priority)" OFF)
+option(USE_INTEL_MKL "Whether to use Intel MKL (Defaults to compiling with Intel MKL)" ON)
+
+# Build a shared libraray
+add_library(systemml SHARED systemml.cpp)
+
+set(MATH_LIBRARIES "")
+
+if (USE_OPEN_BLAS)
+  find_package(OpenBLAS REQUIRED)
+  include_directories(${OpenBLAS_INCLUDE_DIR})
+  set(MATH_LIBRARIES "${OpenBLAS_LIB}")
+elseif(USE_INTEL_MKL)
+  find_package(MKL REQUIRED)
+  include_directories(${MKL_INCLUDE_DIR})
+  set(MATH_LIBRARIES "${MKL_LIBRARIES}")
+endif()
+
+# Option written to a config.h file
+configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
+
+# Include directories. (added for Linux & Darwin, fix later for windows)
+# include paths can be spurious
+include_directories($ENV{JAVA_HOME}/include/)
+include_directories($ENV{JAVA_HOME}/include/darwin)
+include_directories($ENV{JAVA_HOME}/include/linux)
+include_directories($ENV{JAVA_HOME}/include/win32)
+
+# Include the binary dir which contains "config.h"
+include_directories(${CMAKE_BINARY_DIR})
+
+
+# Setting CXX compiler flags
+set_target_properties(systemml PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS} ${MATH_LIBRARIES}")
