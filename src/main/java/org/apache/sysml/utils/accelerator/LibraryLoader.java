@@ -95,7 +95,10 @@ public class LibraryLoader {
 	public static boolean isCUDAAvailable() {
 		try {
 			if (SystemUtils.IS_OS_WINDOWS) {
-				System.loadLibrary("cublas64_80");
+				if(System.getenv("CUDA_PATH") != null) 
+					return true;
+				else
+					return false;
 			}
 			else {
 				System.loadLibrary("cuda");

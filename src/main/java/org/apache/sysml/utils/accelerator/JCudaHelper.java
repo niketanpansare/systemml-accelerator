@@ -18,8 +18,6 @@
  */
 package org.apache.sysml.utils.accelerator;
 
-import java.io.IOException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,15 +42,9 @@ import static jcuda.jcudnn.JCudnn.cudnnCreate;
 import static jcuda.jcublas.JCublas2.cublasCreate;
 import static jcuda.jcusparse.JCusparse.cusparseCreate;
 
-/**
- * Supported version:
- * CUDA 8.0 
- * cuDNN v5.1 (August 10, 2016), for CUDA 8.0
- */
 public class JCudaHelper {
 	private static final Log LOG = LogFactory.getLog(JCudaHelper.class.getName());
 	private static boolean isJCudaLoaded = false;
-	private static String jcudaVersion = "0.8.0";
 	private static long jcudaInitTime = 0;
 	private static int deviceCount = 0;
 	private static cudnnHandle initializedCudnnHandle;
@@ -70,54 +62,42 @@ public class JCudaHelper {
 	static {
 		String specifiedGPU = System.getenv("SYSTEMML_GPU");
 		if(specifiedGPU == null || specifiedGPU.trim().toLowerCase().equals("cuda")) {
-//			try {
-				if(LibraryLoader.isCUDAAvailable()) {
-					long start = System.nanoTime();
-//					LibraryLoader.loadLibrary("JCudaDriver-" + jcudaVersion, "");
-//					LibraryLoader.loadLibrary("JCudaRuntime-" + jcudaVersion, "");
-//					LibraryLoader.loadLibrary("JNvrtc-" + jcudaVersion, "");
-//					LibraryLoader.loadLibrary("JCusparse-" + jcudaVersion, "");
-//					LibraryLoader.loadLibrary("JCublas-" + jcudaVersion, "");
-//					LibraryLoader.loadLibrary("JCublas2-" + jcudaVersion, "");
-//					LibraryLoader.loadLibrary("JCudnn-" + jcudaVersion, "");
-					
-					JCuda.setExceptionsEnabled(true);
-					JCudnn.setExceptionsEnabled(true);
-					JCublas2.setExceptionsEnabled(true);
-					JCusparse.setExceptionsEnabled(true);
-					JCudaDriver.setExceptionsEnabled(true);
-					
-					cuInit(0); // Initialize the driver
-					// Obtain the number of devices
-			        int deviceCountArray[] = { 0 };
-			        cuDeviceGetCount(deviceCountArray);
-			        deviceCount = deviceCountArray[0];
-			        LOG.info("Total number of GPUs on the machine: " + deviceCount);
-			        jcudaInitTime = System.nanoTime() - start;
-			        if(testGPU()) {
-			        	isJCudaLoaded = true;
-			        	LOG.info("GPU is enabled");
-			        	initializedCudnnHandle = new cudnnHandle();
-			        	cudnnCreate(initializedCudnnHandle);
-			        	initializedCublasHandle = new cublasHandle();
-			        	cublasCreate(initializedCublasHandle);
-			        	initializedCusparseHandle = new cusparseHandle();
-			    		cusparseCreate(initializedCusparseHandle);
-			        	Runtime.getRuntime().addShutdownHook(new Thread() {
-		        	      public void run() {
-		        	    	cudnnDestroy(initializedCudnnHandle);
-		        			cublasDestroy(initializedCublasHandle);
-		        			cusparseDestroy(initializedCusparseHandle);
-		        	      }
-		        	    });
-			        }
-			        else {
-			        	LOG.info("GPU is not enabled (memcpy test not successful)");
-			        }
-				}
-//			} catch (IOException e) {
-//				LOG.info("Unable to load jcuda libraries:" + e.getMessage());
-//			}
+			if(LibraryLoader.isCUDAAvailable()) {
+				long start = System.nanoTime();
+				JCuda.setExceptionsEnabled(true);
+				JCudnn.setExceptionsEnabled(true);
+				JCublas2.setExceptionsEnabled(true);
+				JCusparse.setExceptionsEnabled(true);
+				JCudaDriver.setExceptionsEnabled(true);
+				
+				cuInit(0); // Initialize the driver
+				// Obtain the number of devices
+		        int deviceCountArray[] = { 0 };
+		        cuDeviceGetCount(deviceCountArray);
+		        deviceCount = deviceCountArray[0];
+		        LOG.info("Total number of GPUs on the machine: " + deviceCount);
+		        jcudaInitTime = System.nanoTime() - start;
+		        if(testGPU()) {
+		        	isJCudaLoaded = true;
+		        	LOG.info("GPU is enabled");
+		        	initializedCudnnHandle = new cudnnHandle();
+		        	cudnnCreate(initializedCudnnHandle);
+		        	initializedCublasHandle = new cublasHandle();
+		        	cublasCreate(initializedCublasHandle);
+		        	initializedCusparseHandle = new cusparseHandle();
+		    		cusparseCreate(initializedCusparseHandle);
+		        	Runtime.getRuntime().addShutdownHook(new Thread() {
+	        	      public void run() {
+	        	    	cudnnDestroy(initializedCudnnHandle);
+	        			cublasDestroy(initializedCublasHandle);
+	        			cusparseDestroy(initializedCusparseHandle);
+	        	      }
+	        	    });
+		        }
+		        else {
+		        	LOG.info("GPU is not enabled (memcpy test not successful)");
+		        }
+			}
 		}
 		else {
 			LOG.info("Not loading JCUDA as SYSTEMML_GPU="+specifiedGPU);
