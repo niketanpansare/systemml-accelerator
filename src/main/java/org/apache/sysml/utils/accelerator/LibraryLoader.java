@@ -89,10 +89,18 @@ public class LibraryLoader {
 		}
 	}
 	
+	/*
+	 * Note: CUDA 8.0 64 bit should be accessible via path on windows
+	 */
 	public static boolean isCUDAAvailable() {
 		try {
-			 System.loadLibrary("cublas64_75");
-			 return true;
+			if (SystemUtils.IS_OS_WINDOWS) {
+				System.loadLibrary("cublas64_80");
+			}
+			else {
+				System.loadLibrary("cuda");
+			}
+			return true;
 		}
 		catch (UnsatisfiedLinkError e) {
 			LOG.info("Unable to load CUDA:" + e.getMessage());
