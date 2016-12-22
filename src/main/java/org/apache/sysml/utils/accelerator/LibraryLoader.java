@@ -24,13 +24,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.SystemUtils;
 import java.util.HashMap;
-import jcuda.LibUtils;
 
-//import java.io.InputStream;
-//import java.io.OutputStream;
-//import java.io.File;
-//import org.apache.commons.io.FileUtils;
-//import org.apache.commons.io.IOUtils;
+// --------------------------------------
+// Required for loadLibrary
+
+//import jcuda.LibUtils;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.File;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
+//--------------------------------------
 
 public class LibraryLoader {
 	
@@ -113,69 +118,70 @@ public class LibraryLoader {
 		}
 	}
 	
-	public static void loadLibrary(String libName, String suffix1) throws IOException {
-		try {
-			LibUtils.loadLibrary(libName+suffix1);
-		} 
-		catch (UnsatisfiedLinkError e) {
-			throw new IOException(e.getMessage());
-		}
-	}
-	
+//	// Loading systemml through LibUtils is not working
 //	public static void loadLibrary(String libName, String suffix1) throws IOException {
-//		String prefix = "";
-//		String suffix2 = "";
-//		String os = "";
-//		if (SystemUtils.IS_OS_MAC_OSX) {
-//			prefix = "lib";
-//			suffix2 = "dylib";
-//			os = "apple";
-//		} else if (SystemUtils.IS_OS_LINUX) {
-//			prefix = "lib";
-//			suffix2 = "so";
-//			os = "linux";
-//		} else if (SystemUtils.IS_OS_WINDOWS) {
-//			prefix = "";
-//			suffix2 = "dll";
-//			os = "windows";
-//		} else {
-//			LOG.info("Unsupported OS:" + SystemUtils.OS_NAME);
-//			throw new IOException("Unsupported OS");
-//		}
-//		
-//		String arch = archMap.get(SystemUtils.OS_ARCH);
-//		if(arch == null) {
-//			LOG.info("Unsupported architecture:" + SystemUtils.OS_ARCH);
-//			throw new IOException("Unsupported architecture:" + SystemUtils.OS_ARCH);
-//		}
-//		loadLibraryHelper(prefix + libName + suffix1 + "-" + os + "-" + arch + "." + suffix2);
-//	}
-//
-//	public static void loadLibraryHelper(String path) throws IOException {
-//		InputStream in = null; OutputStream out = null;
 //		try {
-//			in = LibraryLoader.class.getResourceAsStream("/lib/"+path);
-//			if(in != null) {
-//				File temp = File.createTempFile(path, "");
-//				temp.deleteOnExit();
-//				out = FileUtils.openOutputStream(temp);
-//		        IOUtils.copy(in, out);
-//		        in.close(); in = null;
-//		        out.close(); out = null;
-//				System.load(temp.getAbsolutePath());
-//			}
-//			else
-//				throw new IOException("No lib available in the jar:" + path);
-//			
-//		} catch(IOException e) {
-//			LOG.info("Unable to load library " + path + " from resource:" + e.getMessage());
-//			throw e;
-//		} finally {
-//			if(out != null)
-//				out.close();
-//			if(in != null)
-//				in.close();
+//			LibUtils.loadLibrary(libName+suffix1);
+//		} 
+//		catch (UnsatisfiedLinkError e) {
+//			throw new IOException(e.getMessage());
 //		}
-//		
 //	}
+	
+	public static void loadLibrary(String libName, String suffix1) throws IOException {
+		String prefix = "";
+		String suffix2 = "";
+		String os = "";
+		if (SystemUtils.IS_OS_MAC_OSX) {
+			prefix = "lib";
+			suffix2 = "dylib";
+			os = "apple";
+		} else if (SystemUtils.IS_OS_LINUX) {
+			prefix = "lib";
+			suffix2 = "so";
+			os = "linux";
+		} else if (SystemUtils.IS_OS_WINDOWS) {
+			prefix = "";
+			suffix2 = "dll";
+			os = "windows";
+		} else {
+			LOG.info("Unsupported OS:" + SystemUtils.OS_NAME);
+			throw new IOException("Unsupported OS");
+		}
+		
+		String arch = archMap.get(SystemUtils.OS_ARCH);
+		if(arch == null) {
+			LOG.info("Unsupported architecture:" + SystemUtils.OS_ARCH);
+			throw new IOException("Unsupported architecture:" + SystemUtils.OS_ARCH);
+		}
+		loadLibraryHelper(prefix + libName + suffix1 + "-" + os + "-" + arch + "." + suffix2);
+	}
+
+	public static void loadLibraryHelper(String path) throws IOException {
+		InputStream in = null; OutputStream out = null;
+		try {
+			in = LibraryLoader.class.getResourceAsStream("/lib/"+path);
+			if(in != null) {
+				File temp = File.createTempFile(path, "");
+				temp.deleteOnExit();
+				out = FileUtils.openOutputStream(temp);
+		        IOUtils.copy(in, out);
+		        in.close(); in = null;
+		        out.close(); out = null;
+				System.load(temp.getAbsolutePath());
+			}
+			else
+				throw new IOException("No lib available in the jar:" + path);
+			
+		} catch(IOException e) {
+			LOG.info("Unable to load library " + path + " from resource:" + e.getMessage());
+			throw e;
+		} finally {
+			if(out != null)
+				out.close();
+			if(in != null)
+				in.close();
+		}
+		
+	}
 }

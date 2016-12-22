@@ -51,6 +51,10 @@ public class BLASHelper {
 			else if(specifiedBLAS.trim().toLowerCase().equals("openblas")) {
 				return LibraryLoader.isOpenBLASAvailable() ? "openblas" : null;
 			}
+			else if(specifiedBLAS.trim().toLowerCase().equals("none")) {
+				LOG.info("Not loading native BLAS as SYSTEMML_BLAS=" + specifiedBLAS);
+				return null;
+			}
 			else {
 				LOG.info("Unknown BLAS:" + specifiedBLAS);
 				return null;
