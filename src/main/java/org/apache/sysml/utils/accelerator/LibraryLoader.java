@@ -140,7 +140,7 @@ public class LibraryLoader {
 	public static void loadLibraryHelper(String path) throws IOException {
 		InputStream in = null; OutputStream out = null;
 		try {
-			in = LibraryLoader.class.getResourceAsStream("/"+path);
+			in = LibraryLoader.class.getResourceAsStream("/lib/"+path);
 			if(in != null) {
 				File temp = File.createTempFile(path, "");
 				temp.deleteOnExit();

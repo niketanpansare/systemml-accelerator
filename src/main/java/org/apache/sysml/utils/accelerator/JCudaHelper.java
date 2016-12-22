@@ -70,22 +70,23 @@ public class JCudaHelper {
 	static {
 		String specifiedGPU = System.getenv("SYSTEMML_GPU");
 		if(specifiedGPU == null || specifiedGPU.trim().toLowerCase().equals("cuda")) {
-			try {
+//			try {
 				if(LibraryLoader.isCUDAAvailable()) {
 					long start = System.nanoTime();
-					LibraryLoader.loadLibrary("JCudaDriver-" + jcudaVersion, "");
-					LibraryLoader.loadLibrary("JCudaRuntime-" + jcudaVersion, "");
-					LibraryLoader.loadLibrary("JNvrtc-" + jcudaVersion, "");
-					LibraryLoader.loadLibrary("JCusparse-" + jcudaVersion, "");
-					LibraryLoader.loadLibrary("JCublas-" + jcudaVersion, "");
-					LibraryLoader.loadLibrary("JCublas2-" + jcudaVersion, "");
-					LibraryLoader.loadLibrary("JCudnn-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JCudaDriver-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JCudaRuntime-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JNvrtc-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JCusparse-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JCublas-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JCublas2-" + jcudaVersion, "");
+//					LibraryLoader.loadLibrary("JCudnn-" + jcudaVersion, "");
 					
 					JCuda.setExceptionsEnabled(true);
 					JCudnn.setExceptionsEnabled(true);
 					JCublas2.setExceptionsEnabled(true);
 					JCusparse.setExceptionsEnabled(true);
 					JCudaDriver.setExceptionsEnabled(true);
+					
 					cuInit(0); // Initialize the driver
 					// Obtain the number of devices
 			        int deviceCountArray[] = { 0 };
@@ -114,9 +115,9 @@ public class JCudaHelper {
 			        	LOG.info("GPU is not enabled (memcpy test not successful)");
 			        }
 				}
-			} catch (IOException e) {
-				LOG.info("Unable to load jcuda libraries:" + e.getMessage());
-			}
+//			} catch (IOException e) {
+//				LOG.info("Unable to load jcuda libraries:" + e.getMessage());
+//			}
 		}
 		else {
 			LOG.info("Not loading JCUDA as SYSTEMML_GPU="+specifiedGPU);
