@@ -64,11 +64,18 @@ public class JCudaHelper {
 		if(specifiedGPU == null || specifiedGPU.trim().toLowerCase().equals("cuda")) {
 			if(LibraryLoader.isCUDAAvailable()) {
 				long start = System.nanoTime();
-				JCuda.setExceptionsEnabled(true);
-				JCudnn.setExceptionsEnabled(true);
-				JCublas2.setExceptionsEnabled(true);
-				JCusparse.setExceptionsEnabled(true);
-				JCudaDriver.setExceptionsEnabled(true);
+				
+				try {
+					JCuda.setExceptionsEnabled(true);
+					JCudnn.setExceptionsEnabled(true);
+					JCublas2.setExceptionsEnabled(true);
+					JCusparse.setExceptionsEnabled(true);
+					JCudaDriver.setExceptionsEnabled(true);
+				}
+				catch(java.lang.UnsatisfiedLinkError e) {
+					LOG.debug(e.getMessage());
+					throw new java.lang.UnsatisfiedLinkError("Couldnot load native JCuda libraries");
+				}
 				
 				cuInit(0); // Initialize the driver
 				// Obtain the number of devices
