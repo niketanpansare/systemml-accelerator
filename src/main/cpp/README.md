@@ -132,17 +132,19 @@ After the shared library object is generated, it may need to be renamed to what 
 1. Intel MKL:
 
 	```bash
-	g++ -o libsystemml_mkl_x86_64.so systemml.cpp  -I$JAVA_HOME/include -I$MKLROOT/include -I$JAVA_HOME/include/linux -lmkl_rt -lpthread -lm -ldl -L$MKLROOT/lib/intel64 -m64 -Wl,--no-as-needed -fopenmp -O3 -shared -fPIC
+	g++ -o libsystemml_mkl-linux-x86_64.so systemml.cpp  -I$JAVA_HOME/include -I$MKLROOT/include -I$JAVA_HOME/include/linux -lmkl_rt -lpthread -lm -ldl -L$MKLROOT/lib/intel64 -m64 -Wl,--no-as-needed -fopenmp -O3 -shared -fPIC
 	```
 
 2. OpenBLAS:
 
 	```bash
 	# -I$OPENBLASROOT/include -L$OPENBLASROOT/lib
-	g++ -o libsystemml_openblas_x86_64.so systemml.cpp  -I$JAVA_HOME/include  -I$JAVA_HOME/include/linux -lopenblas -lpthread -lm -ldl -DUSE_OPEN_BLAS -fopenmp -O3 -shared -fPIC
+	g++ -o libsystemml_openblas-linux-x86_64.so systemml.cpp  -I$JAVA_HOME/include  -I$JAVA_HOME/include/linux -lopenblas -lpthread -lm -ldl -DUSE_OPEN_BLAS -fopenmp -O3 -shared -fPIC
 	```
 
 ### 64-bit Windows
+
+Comment `#include "config.h"` in systemml.cpp
 
 1. Intel MKL:
 
@@ -150,7 +152,7 @@ After the shared library object is generated, it may need to be renamed to what 
 	"C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\vcvarsall.bat" amd64
 	"%MKLROOT%"\bin\mklvars.bat intel64
 	set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_25
-	cl systemml.cpp -I. -I"%MKLROOT%"\include -I"%JAVA_HOME%"\include -I"%JAVA_HOME%"\include\win32 -Fesystemml_mkl_x86_64.dll -MD -LD  "%MKLROOT%"\lib\intel64_win\mkl_intel_thread_dll.lib "%MKLROOT%"\lib\intel64_win\mkl_core_dll.lib "%MKLROOT%"\lib\intel64_win\mkl_intel_lp64_dll.lib
+	cl systemml.cpp -I. -I"%MKLROOT%"\include -I"%JAVA_HOME%"\include -I"%JAVA_HOME%"\include\win32 -Fesystemml_mkl-windows-x86_64.dll -MD -LD  "%MKLROOT%"\lib\intel64_win\mkl_intel_thread_dll.lib "%MKLROOT%"\lib\intel64_win\mkl_core_dll.lib "%MKLROOT%"\lib\intel64_win\mkl_intel_lp64_dll.lib
 	```
 
 
@@ -161,5 +163,5 @@ Download and extract [64-bit OpenBLAS](https://sourceforge.net/projects/openblas
 	```bash
 	"C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\vcvarsall.bat" amd64
 	set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_25
-	cl systemml.cpp -I. -I"%OPENBLASROOT%"\include -I"%JAVA_HOME%"\include -I"%JAVA_HOME%"\include\win32 -DUSE_OPEN_BLAS -Fesystemml_openblas_x86_64.dll -MD -LD "%OPENBLASROOT%"\lib\libopenblas.dll.a
+	cl systemml.cpp -I. -I"%OPENBLASROOT%"\include -I"%JAVA_HOME%"\include -I"%JAVA_HOME%"\include\win32 -DUSE_OPEN_BLAS -Fesystemml_openblas-windows-x86_64.dll -MD -LD "%OPENBLASROOT%"\lib\libopenblas.dll.a
 	```
