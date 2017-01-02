@@ -59,12 +59,12 @@ extern void openblas_set_num_threads(int MAX_NUM_THREADS);
 #endif
 
 #define GET_DOUBLE_ARRAY(env, input) \
-  ((double*)env->GetPrimitiveArrayCritical(input, NULL))
-// env->GetDoubleArrayElements(input,NULL)
+  env->GetDoubleArrayElements(input,NULL)
+// ((double*)env->GetPrimitiveArrayCritical(input, NULL))
 
 #define RELEASE_DOUBLE_ARRAY(env, input, inputPtr) \
-  env->ReleasePrimitiveArrayCritical(input, inputPtr, 0)
-// env->ReleaseDoubleArrayElements(input, inputPtr, 0)
+  env->ReleaseDoubleArrayElements(input, inputPtr, 0)
+// env->ReleasePrimitiveArrayCritical(input, inputPtr, 0)
 
 int MAX_NUM_THREADS = -1;
 int CURRENT_NUM_THREADS = -1;
