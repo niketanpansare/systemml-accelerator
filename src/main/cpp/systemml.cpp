@@ -17,7 +17,7 @@
  * under the License.
  */
 
-// #include "config.h"
+//#include "config.h"
 
 // *****************************************************************
 // We support Intel MKL (recommended) or OpenBLAS.
@@ -59,13 +59,12 @@ extern void openblas_set_num_threads(int MAX_NUM_THREADS);
 #endif
 
 #define GET_DOUBLE_ARRAY(env, input) \
-  env->GetDoubleArrayElements(input,NULL)
-//   ((double*)env->GetPrimitiveArrayCritical(input, NULL))
-
+  ((double*)env->GetPrimitiveArrayCritical(input, NULL))
+// env->GetDoubleArrayElements(input,NULL)
 
 #define RELEASE_DOUBLE_ARRAY(env, input, inputPtr) \
-  env->ReleaseDoubleArrayElements(input, inputPtr, 0)
-// env->ReleasePrimitiveArrayCritical(input, inputPtr, 0)
+  env->ReleasePrimitiveArrayCritical(input, inputPtr, 0)
+// env->ReleaseDoubleArrayElements(input, inputPtr, 0)
 
 int MAX_NUM_THREADS = -1;
 int CURRENT_NUM_THREADS = -1;
@@ -284,21 +283,16 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
   int numCol2ImElem = (int)P * (int)Q * (int)C * (int)R * (int)S;
 
   setSequentialBLAS();
-  
-  int numOpenMPThreads = omp_get_num_threads();
-  double* rotatedDoutPtrArrays = new double[numRotatedElem*numOpenMPThreads];
-  double* col2imInputArrays = new double[numCol2ImElem*numOpenMPThreads];
-  
 #pragma omp parallel for
   for (int n = 0; n < (int)N; n++) {
     // Step 1: Rotate dout
-    double* rotatedDoutPtr = rotatedDoutPtrArrays + numRotatedElem*(omp_get_thread_num() % numOpenMPThreads);
+    double* rotatedDoutPtr = new double[numRotatedElem];
     rotate180(doutPtr + n * KPQ, rotatedDoutPtr, 1, (int)C, (int)H, (int)W, (int)K,
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
            (int)P, (int)Q);
 
     // Step 2: t(rotatedDout (PQ X K) %*% filter (K X CRS))
-    double* col2imInput = col2imInputArrays + numCol2ImElem*(omp_get_thread_num() % numOpenMPThreads);
+    double* col2imInput = new double[numCol2ImElem];
     matmult(rotatedDoutPtr, filterPtr, col2imInput,
             (int)P * (int)Q, (int)K, (int)C * (int)R * (int)S, 1);
 
@@ -306,10 +300,10 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
     col2im(col2imInput, retPtr + n * CHW, 1, (int)C, (int)H, (int)W, (int)K,
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
            (int)P, (int)Q);
+
+    delete[] rotatedDoutPtr;
+    delete[] col2imInput;
   }
-  
-  delete [] rotatedDoutPtrArrays;
-  delete [] col2imInputArrays;
 
   RELEASE_DOUBLE_ARRAY(env, filter, filterPtr);
   RELEASE_DOUBLE_ARRAY(env, dout, doutPtr);
@@ -329,13 +323,9 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
   int numIm2ColElem = (int)C * (int)R * (int)S * (int)P * (int)Q;
 
   setSequentialBLAS();
-  
-  int numOpenMPThreads = omp_get_num_threads();
-  double* loweredMatArrays = new double[numIm2ColElem*numOpenMPThreads];
-  
 #pragma omp parallel for
   for (int n = 0; n < (int)N; n++) {
-    double* loweredMat = loweredMatArrays + numIm2ColElem*(omp_get_thread_num() % numOpenMPThreads);
+    double* loweredMat = new double[numIm2ColElem];
 
     // Step 1: Perform im2col
     im2col(inputPtr + n * CHW, loweredMat, 1, (int)C, (int)H, (int)W, (int)K,
@@ -345,9 +335,9 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
     // Step 2: filter (K X CRS) %*% loweredMat (CRS X PQ)
     matmult(filterPtr, loweredMat, retPtr + n * KPQ, (int)K,
             (int)C * (int)R * (int)S, (int)P * (int)Q, 1);
+
+    delete[] loweredMat;
   }
-  
-  delete [] loweredMatArrays;
 
   RELEASE_DOUBLE_ARRAY(env, input, inputPtr);
   RELEASE_DOUBLE_ARRAY(env, filter, filterPtr);
