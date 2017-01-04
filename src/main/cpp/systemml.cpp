@@ -283,16 +283,32 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
   int numCol2ImElem = (int)P * (int)Q * (int)C * (int)R * (int)S;
 
   setSequentialBLAS();
-#pragma omp parallel for
+  
+  double* rotatedDoutPtrArrays;
+  double* col2imInputArrays;
+
+#pragma omp parallel  
+{
+  int numOpenMPThreads = omp_get_num_threads();
+
+#pragma omp master  
+{  
+  rotatedDoutPtrArrays = new double[numRotatedElem*numOpenMPThreads];
+  col2imInputArrays = new double[numCol2ImElem*numOpenMPThreads];
+} 
+    
+#pragma omp barrier
+
+#pragma omp for
   for (int n = 0; n < (int)N; n++) {
     // Step 1: Rotate dout
-    double* rotatedDoutPtr = new double[numRotatedElem];
+    double* rotatedDoutPtr = rotatedDoutPtrArrays + numRotatedElem*omp_get_thread_num();
     rotate180(doutPtr + n * KPQ, rotatedDoutPtr, 1, (int)C, (int)H, (int)W, (int)K,
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
            (int)P, (int)Q);
 
     // Step 2: t(rotatedDout (PQ X K) %*% filter (K X CRS))
-    double* col2imInput = new double[numCol2ImElem];
+    double* col2imInput = col2imInputArrays + numCol2ImElem*omp_get_thread_num();
     matmult(rotatedDoutPtr, filterPtr, col2imInput,
             (int)P * (int)Q, (int)K, (int)C * (int)R * (int)S, 1);
 
@@ -301,9 +317,14 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
            (int)R, (int)S, (int)stride_h, (int)stride_w, (int)pad_h, (int)pad_w,
            (int)P, (int)Q);
 
-    delete[] rotatedDoutPtr;
-    delete[] col2imInput;
-  }
+  } // end omp parallel for
+  
+#pragma omp barrier
+
+} // end omp parallel
+
+  delete [] rotatedDoutPtrArrays;
+  delete [] col2imInputArrays;
 
   RELEASE_DOUBLE_ARRAY(env, filter, filterPtr);
   RELEASE_DOUBLE_ARRAY(env, dout, doutPtr);
@@ -323,9 +344,23 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
   int numIm2ColElem = (int)C * (int)R * (int)S * (int)P * (int)Q;
 
   setSequentialBLAS();
-#pragma omp parallel for
+  
+  double* loweredMatArrays;
+  
+#pragma omp parallel  
+{
+  int numOpenMPThreads = omp_get_num_threads();
+
+#pragma omp master  
+{  
+  loweredMatArrays = new double[numIm2ColElem*numOpenMPThreads];
+} 
+    
+#pragma omp barrier
+
+#pragma omp for
   for (int n = 0; n < (int)N; n++) {
-    double* loweredMat = new double[numIm2ColElem];
+    double* loweredMat = loweredMatArrays + numIm2ColElem*omp_get_thread_num();
 
     // Step 1: Perform im2col
     im2col(inputPtr + n * CHW, loweredMat, 1, (int)C, (int)H, (int)W, (int)K,
@@ -335,9 +370,14 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
     // Step 2: filter (K X CRS) %*% loweredMat (CRS X PQ)
     matmult(filterPtr, loweredMat, retPtr + n * KPQ, (int)K,
             (int)C * (int)R * (int)S, (int)P * (int)Q, 1);
+    
+  } // end omp parallel for
 
-    delete[] loweredMat;
-  }
+#pragma omp barrier
+
+} // end omp parallel
+
+  delete [] loweredMatArrays;
 
   RELEASE_DOUBLE_ARRAY(env, input, inputPtr);
   RELEASE_DOUBLE_ARRAY(env, filter, filterPtr);
