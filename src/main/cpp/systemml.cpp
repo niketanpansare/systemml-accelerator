@@ -59,30 +59,29 @@ extern void openblas_set_num_threads(int MAX_NUM_THREADS);
 #endif
 
 #define GET_DOUBLE_ARRAY(env, input) \
-  env->GetDoubleArrayElements(input,NULL)
-// ((double*)env->GetPrimitiveArrayCritical(input, NULL))
+  ((double*)env->GetPrimitiveArrayCritical(input, NULL))
+// env->GetDoubleArrayElements(input,NULL)
 
 #define RELEASE_DOUBLE_ARRAY(env, input, inputPtr) \
-  env->ReleaseDoubleArrayElements(input, inputPtr, 0)
-// env->ReleasePrimitiveArrayCritical(input, inputPtr, 0)
+  env->ReleasePrimitiveArrayCritical(input, inputPtr, 0)
+// env->ReleaseDoubleArrayElements(input, inputPtr, 0)
 
-int MAX_NUM_THREADS = -1;
 int CURRENT_NUM_THREADS = -1;
-void setSequentialBLAS() {
+void ensureSequentialBLAS() {
+/*
 #ifdef USE_INTEL_MKL
-	if(MAX_NUM_THREADS == -1) {
-		MAX_NUM_THREADS = mkl_get_max_threads();
-	}
 	if(CURRENT_NUM_THREADS != 1) {
+	    #ifdef USE_MKL_THREADING_GNU
+			mkl_set_threading_layer(MKL_THREADING_GNU)
+		#else
+			mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL)
+		#endif
 		CURRENT_NUM_THREADS = 1;
 		mkl_set_num_threads(1);
 	}
 #endif
-
+*/
 #ifdef USE_OPEN_BLAS
-	if(MAX_NUM_THREADS == -1) {
-		MAX_NUM_THREADS = openblas_get_num_threads();
-	}
 	if(CURRENT_NUM_THREADS != 1) {
 		CURRENT_NUM_THREADS = 1;
 		openblas_set_num_threads(1);
@@ -90,62 +89,7 @@ void setSequentialBLAS() {
 #endif
 }
 
-void setMultiThreadedBLAS() {
-#ifdef USE_INTEL_MKL
-	if(MAX_NUM_THREADS == -1) {
-		MAX_NUM_THREADS = mkl_get_max_threads();
-	}
-	if(CURRENT_NUM_THREADS != MAX_NUM_THREADS) {
-		CURRENT_NUM_THREADS = MAX_NUM_THREADS;
-		mkl_set_num_threads(MAX_NUM_THREADS);
-	}
-#endif
-#ifdef USE_OPEN_BLAS
-	if(MAX_NUM_THREADS == -1) {
-		MAX_NUM_THREADS = openblas_get_num_threads();
-	}
-	if(CURRENT_NUM_THREADS != MAX_NUM_THREADS) {
-		CURRENT_NUM_THREADS = MAX_NUM_THREADS;
-		openblas_set_num_threads(MAX_NUM_THREADS);
-	}
-#endif
-}
-
-void setNumberOfThreadsBLAS(int numThreads) {
-#ifdef USE_INTEL_MKL
-	if(CURRENT_NUM_THREADS != numThreads) {
-		CURRENT_NUM_THREADS = numThreads;
-		mkl_set_num_threads(numThreads);
-	}
-#endif
-#ifdef USE_OPEN_BLAS
-	if(CURRENT_NUM_THREADS != numThreads) {
-		CURRENT_NUM_THREADS = numThreads;
-		openblas_set_num_threads(numThreads);
-	}
-#endif
-}
-
-// Multiplies two matrices m1Ptr and m2Ptr and transposes the output in row-major format of shape
-// (m1rlen, m1clen) and (m1clen, m2clen)
-void matmult_transpose_output(double* m1Ptr, double* m2Ptr, double* retPtr, int m1rlen,
-             int m1clen, int m2clen, int numThreads) {
-  setNumberOfThreadsBLAS(numThreads);
-  cblas_dgemm(CblasRowMajor, CblasTrans, CblasTrans, m2clen, m1rlen, m1clen, 1.0, m2Ptr, m2clen,
-              m1Ptr, m1clen, 0.0, retPtr, m1rlen);
-}
-
-// Multiplies two matrices m1Ptr and m2Ptr in row-major format of shape
-// (m1rlen, m1clen) and (m1clen, m2clen)
-void matmult(double* m1Ptr, double* m2Ptr, double* retPtr, int m1rlen,
-             int m1clen, int m2clen) {
-  int m = m1rlen;
-  int n = m2clen;
-  int k = m1clen;
-  setMultiThreadedBLAS();
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, m1Ptr, k,
-              m2Ptr, n, 0.0, retPtr, n);
-}
+// -----------------------------------------------------------------------------------------
 
 // Multiplies two matrices m1Ptr and m2Ptr in row-major format of shape
 // (m1rlen, m1clen) and (m1clen, m2clen)
@@ -154,10 +98,35 @@ void matmult(double* m1Ptr, double* m2Ptr, double* retPtr, int m1rlen,
   int m = m1rlen;
   int n = m2clen;
   int k = m1clen;
-  setNumberOfThreadsBLAS(numThreads);
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, m1Ptr, k,
+  if(numThreads == 1) {
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, m1Ptr, k,
               m2Ptr, n, 0.0, retPtr, n);
+  }
+  else {
+#ifdef USE_OPEN_BLAS
+  openblas_set_num_threads(numThreads);
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, m1Ptr, k,
+          m2Ptr, n, 0.0, retPtr, n);
+  openblas_set_num_threads(1);
+#else
+	#ifdef USE_MKL_THREADING_GNU
+    	mkl_set_num_threads(numThreads);
+  		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, 1.0, m1Ptr, k,
+          m2Ptr, n, 0.0, retPtr, n);
+  		mkl_set_num_threads(1);
+	#else
+		// Row-wise parallelism - suboptimal but avoids internal BLAS threading issues with Java/OpenMP threading
+    	// See https://software.intel.com/en-us/node/528707
+#pragma omp parallel for num_threads(numThreads)
+	    for(int i = 0; i < m1rlen; i++) {
+	      cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, 1, n, k, 1.0, m1Ptr + i*m1clen, k,
+	              m2Ptr, n, 0.0, retPtr + i*m2clen, n);
+	    }
+	#endif
+#endif
+  }
 }
+// -----------------------------------------------------------------------------------------
 
 void rotate180(double* inputArray, double* outputArray, int N, int C, int H, int W,
             int K, int R, int S, int stride_h, int stride_w, int pad_h,
@@ -259,6 +228,9 @@ JNIEXPORT void JNICALL
 Java_org_apache_sysml_runtime_controlprogram_CPPUtil_matrixMultDenseDense(
     JNIEnv* env, jclass cls, jdoubleArray m1, jdoubleArray m2, jdoubleArray ret,
     jint m1rlen, jint m1clen, jint m2clen, jint numThreads) {
+  // First step:  Avoids oversubscription and other openmp/internal blas threading issues
+  ensureSequentialBLAS();
+  
   double* m1Ptr = GET_DOUBLE_ARRAY(env, m1);
   double* m2Ptr = GET_DOUBLE_ARRAY(env, m2);
   double* retPtr = GET_DOUBLE_ARRAY(env, ret);
@@ -274,6 +246,9 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
   JNIEnv* env, jclass, jdoubleArray filter, jdoubleArray dout,
     jdoubleArray ret, jint N, jint C, jint H, jint W, jint K, jint R, jint S,
     jint stride_h, jint stride_w, jint pad_h, jint pad_w, jint P, jint Q) {
+  // First step: Avoids oversubscription and other openmp/internal blas threading issues
+  ensureSequentialBLAS();
+  
   double* filterPtr = GET_DOUBLE_ARRAY(env, filter);
   double* doutPtr = GET_DOUBLE_ARRAY(env, dout);
   double* retPtr = GET_DOUBLE_ARRAY(env, ret);
@@ -282,8 +257,6 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
   int numRotatedElem = (int)P * (int)Q * (int)K;
   int numCol2ImElem = (int)P * (int)Q * (int)C * (int)R * (int)S;
 
-  setSequentialBLAS();
-  
   double* rotatedDoutPtrArrays;
   double* col2imInputArrays;
 
@@ -325,7 +298,7 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
 
   delete [] rotatedDoutPtrArrays;
   delete [] col2imInputArrays;
-
+  
   RELEASE_DOUBLE_ARRAY(env, filter, filterPtr);
   RELEASE_DOUBLE_ARRAY(env, dout, doutPtr);
   RELEASE_DOUBLE_ARRAY(env, ret, retPtr);
@@ -336,14 +309,15 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
     JNIEnv* env, jclass, jdoubleArray input, jdoubleArray filter,
     jdoubleArray ret, jint N, jint C, jint H, jint W, jint K, jint R, jint S,
     jint stride_h, jint stride_w, jint pad_h, jint pad_w, jint P, jint Q) {
+  // First step:  Avoids oversubscription and other openmp/internal blas threading issues
+  ensureSequentialBLAS();
+  
   double* inputPtr = GET_DOUBLE_ARRAY(env, input);
   double* filterPtr = GET_DOUBLE_ARRAY(env, filter);
   double* retPtr = GET_DOUBLE_ARRAY(env, ret);
   int CHW = (int)C * (int)H * (int)W;
   int KPQ = (int)K * (int)P * (int)Q;
   int numIm2ColElem = (int)C * (int)R * (int)S * (int)P * (int)Q;
-
-  setSequentialBLAS();
   
   double* loweredMatArrays;
   
@@ -378,7 +352,7 @@ Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dDense(
 } // end omp parallel
 
   delete [] loweredMatArrays;
-
+  
   RELEASE_DOUBLE_ARRAY(env, input, inputPtr);
   RELEASE_DOUBLE_ARRAY(env, filter, filterPtr);
   RELEASE_DOUBLE_ARRAY(env, ret, retPtr);

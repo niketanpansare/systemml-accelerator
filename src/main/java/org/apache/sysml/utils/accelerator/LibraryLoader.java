@@ -20,9 +20,11 @@ package org.apache.sysml.utils.accelerator;
 
 
 import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.SystemUtils;
+
 import java.util.HashMap;
 
 // --------------------------------------
@@ -32,6 +34,7 @@ import java.util.HashMap;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -55,8 +58,17 @@ public class LibraryLoader {
 	
 	public static boolean isMKLAvailable() {
 		try {
-			 System.loadLibrary("mkl_rt");
-			 return true;
+			if(SystemUtils.IS_OS_LINUX) {
+				try {
+					// This sets the environment variable MKL_THREADING_LAYER to GNU (which has to be done before loading MKL)
+					// which is helpful in avoid performance issues with Intel Multi-threading and GNU OpenMP
+					// See https://software.intel.com/en-us/node/528707 and https://software.intel.com/en-us/node/528522
+					LibraryLoader.loadLibrary("preload_systemml", "");
+					BLASHelper.initializePreMKLLoad();
+				} catch (IOException e) {}
+			}
+			System.loadLibrary("mkl_rt");
+			return true;
 		}
 		catch (UnsatisfiedLinkError e) {
 			LOG.info("Unable to load MKL:" + e.getMessage());

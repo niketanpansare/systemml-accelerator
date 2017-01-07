@@ -129,10 +129,15 @@ After the shared library object is generated, it may need to be renamed to what 
 
 ### 64-bit Linux
 
+```bash
+g++ -o libpreload_systemml-linux-x86_64.so preload_systemml.cpp  -I$JAVA_HOME/include -I$JAVA_HOME/include/linux -lm -ldl -m64 -fopenmp -O3 -shared -fPIC
+```
+	
 1. Intel MKL:
 
 	```bash
-	g++ -o libsystemml_mkl-linux-x86_64.so systemml.cpp  -I$JAVA_HOME/include -I$MKLROOT/include -I$JAVA_HOME/include/linux -lmkl_rt -lpthread -lm -ldl -L$MKLROOT/lib/intel64 -m64 -Wl,--no-as-needed -fopenmp -O3 -shared -fPIC
+	# -Wl,--as-needed
+	g++ -o libsystemml_mkl-linux-x86_64.so systemml.cpp  -I$JAVA_HOME/include -I$MKLROOT/include -I$JAVA_HOME/include/linux -DUSE_MKL_THREADING_GNU -lmkl_rt -lpthread -lm -ldl -L$MKLROOT/lib/intel64 -m64 -fopenmp -O3 -shared -fPIC
 	```
 
 2. OpenBLAS:

@@ -66,4 +66,5 @@ public class BLASHelper {
 		}
 	}
 	
+	public static native void initializePreMKLLoad();
 }
