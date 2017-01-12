@@ -66,6 +66,8 @@ public class LibraryLoader {
 					LibraryLoader.loadLibrary("preload_systemml", "");
 					BLASHelper.initializePreMKLLoad();
 				} catch (IOException e) {}
+				// GNU OpenMP is needed by Intel MKL
+				System.loadLibrary("gomp");
 			}
 			System.loadLibrary("mkl_rt");
 			return true;
