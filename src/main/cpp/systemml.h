@@ -44,12 +44,29 @@ JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv
 
 /*
  * Class:     org_apache_sysml_runtime_controlprogram_CPPUtil
+ * Method:    conv2dBiasAddDense
+ * Signature: ([D[D[D[DIIIIIIIIIIIII)V
+ */
+JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dBiasAddDense
+  (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint);
+
+
+/*
+ * Class:     org_apache_sysml_runtime_controlprogram_CPPUtil
  * Method:    conv2dBackwardDataDense
  * Signature: ([D[D[DIIIIIIIIIIIII)V
  */
 JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dBackwardDataDense
   (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint);
 
+/*
+ * Class:     org_apache_sysml_runtime_controlprogram_CPPUtil
+ * Method:    conv2dBackwardFilterDense
+ * Signature: ([D[D[DIIIIIIIIIIIII)V
+ */
+JNIEXPORT void JNICALL Java_org_apache_sysml_runtime_controlprogram_CPPUtil_conv2dBackwardFilterDense
+  (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint, jint);
+  
 #ifdef __cplusplus
 }
 #endif
